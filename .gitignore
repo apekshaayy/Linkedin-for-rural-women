@@ -13,3 +13,6 @@ build/
 
 # Logs
 npm-debug.log*
+
+#mongodb .env
+.env
