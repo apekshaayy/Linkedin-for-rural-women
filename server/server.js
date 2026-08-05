@@ -2,15 +2,16 @@ const User = require("./models/User");
 const express = require("express");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
-console.log("MONGO_URI:", process.env.MONGO_URI);
+//console.log("MONGO_URI:", process.env.MONGO_URI);
 
 const app = express();
 app.use(express.json())
 const PORT = 3000;
 
-console.log(process.env.MONGO_URI);
+//console.log(process.env.MONGO_URI);
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected");
@@ -57,4 +58,40 @@ app.post("/register", async (req, res) => {
     }
 });
 
+app.post("/login", async (req, res) => {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+    return res.status(404).json({
+        success: false,
+        message: "User not found"
+    });
+    }
+    const isMatch = await bcrypt.compare(
+    password,
+    user.password
+    );
+    if (!isMatch) {
+    return res.status(401).json({
+        success: false,
+        message: "Invalid password"
+    });
+    }
+    const token = jwt.sign(
+    {
+        id: user._id,
+        email: user.email
+    },
+    process.env.JWT_SECRET,
+    {
+        expiresIn: "1d"
+    }
+    );
 
+    res.status(200).json({
+        success: true,
+        message: "Login successful",
+        token
+    });
+
+});
