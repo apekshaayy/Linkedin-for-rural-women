@@ -1,21 +1,28 @@
 const User = require("./models/User");
 const express = require("express");
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
 require("dotenv").config();
+console.log("MONGO_URI:", process.env.MONGO_URI);
 
 const app = express();
 app.use(express.json())
 const PORT = 3000;
 
+console.log(process.env.MONGO_URI);
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log("MongoDB connected");
-    })
-    .catch((error) => {
-        console.log("MongoDB connection error:", error);
+  .then(() => {
+    console.log("MongoDB connected");
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
     });
-// Register Route
+  })
+  .catch(err => {
+    console.error("MongoDB connection error:", err);
+  });
+//Register Route
 app.post("/register", async (req, res) => {
     console.log("REGISTER ROUTE HIT");
     console.log("Received data:", req.body);
@@ -23,13 +30,13 @@ app.post("/register", async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        const newUser = new User({
-            name: name,
-            email: email,
-            password: password
-        });
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        console.log("User object created:", newUser);
+        const newUser = new User({
+            name,
+            email,
+            password: hashedPassword
+        });
 
         const savedUser = await newUser.save();
 
@@ -41,15 +48,13 @@ app.post("/register", async (req, res) => {
         });
 
     } catch (error) {
-        console.log("ERROR SAVING USER:", error);
+        console.log("ERROR:", error);
 
         res.status(500).json({
             success: false,
-            message: "Registration failed"
+            message: error.message
         });
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+
