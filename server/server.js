@@ -1,28 +1,18 @@
 const User = require("./models/User");
 const express = require("express");
-const mongoose = require("mongoose");
+const connectDB = require("./config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
 //console.log("MONGO_URI:", process.env.MONGO_URI);
-
+connectDB();
 const app = express();
 app.use(express.json())
 const PORT = 3000;
 
 //console.log(process.env.MONGO_URI);
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected");
 
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error("MongoDB connection error:", err);
-  });
 //Register Route
 app.post("/register", async (req, res) => {
     console.log("REGISTER ROUTE HIT");
