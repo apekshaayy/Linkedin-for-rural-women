@@ -17,3 +17,6 @@ const PORT = 3000;
 const authRoutes = require("./routes/authRoutes");
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
