@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import API from "../api/api";
 
 function Login() {
   const navigate = useNavigate();
@@ -22,14 +22,18 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setMessage("");
+
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/login",
+      const response = await API.post(
+        "/auth/login",
         formData
       );
 
+      // Save JWT token
       localStorage.setItem("token", response.data.token);
 
+      // Go to profile
       navigate("/profile");
 
     } catch (error) {
@@ -80,7 +84,11 @@ function Login() {
 
         </form>
 
-        {message && <p className="error-message">{message}</p>}
+        {message && (
+          <p className="error-message">
+            {message}
+          </p>
+        )}
 
         <p className="switch-auth">
           Don't have an account?

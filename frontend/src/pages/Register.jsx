@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import API from "../api/api";
 
 function Register() {
   const navigate = useNavigate();
@@ -8,26 +8,27 @@ function Register() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: ""
+    password: "",
   });
 
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setMessage("");
+    setError("");
+
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/register",
-        formData
-      );
+      const response = await API.post("/auth/register", formData);
 
       setMessage(response.data.message);
 
@@ -36,7 +37,7 @@ function Register() {
       }, 1000);
 
     } catch (error) {
-      setMessage(
+      setError(
         error.response?.data?.message || "Registration failed"
       );
     }
@@ -49,53 +50,54 @@ function Register() {
 
         <h1>Create your account</h1>
 
-        <p className="auth-subtitle">
-          Join RuralConnect and start building your opportunities.
-        </p>
+        <p>Join RuralConnect and showcase your skills.</p>
 
         <form onSubmit={handleSubmit}>
 
-          <label>Name</label>
           <input
             type="text"
             name="name"
-            placeholder="Your name"
+            placeholder="Full name"
             value={formData.name}
             onChange={handleChange}
             required
           />
 
-          <label>Email</label>
           <input
             type="email"
             name="email"
-            placeholder="you@example.com"
+            placeholder="Email"
             value={formData.email}
             onChange={handleChange}
             required
           />
 
-          <label>Password</label>
           <input
             type="password"
             name="password"
-            placeholder="Create a password"
+            placeholder="Password"
             value={formData.password}
             onChange={handleChange}
             required
           />
 
-          <button type="submit" className="primary-btn full">
+          <button type="submit">
             Create account
           </button>
 
         </form>
 
-        {message && <p className="message">{message}</p>}
+        {message && <p className="success-message">{message}</p>}
+        {error && <p className="error-message">{error}</p>}
 
-        <p className="switch-auth">
-          Already have an account?
-          <Link to="/login"> Sign in</Link>
+        <p>
+          Already have an account?{" "}
+          <span
+            className="link"
+            onClick={() => navigate("/login")}
+          >
+            Sign in
+          </span>
         </p>
 
       </div>

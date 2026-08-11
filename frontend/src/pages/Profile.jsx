@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import API from "../api/api";
 
 function Profile() {
   const navigate = useNavigate();
@@ -8,6 +8,48 @@ function Profile() {
   const [user, setUser] = useState(null);
   const [message, setMessage] = useState("");
 
+   const [editing, setEditing] = useState(false);
+        const [formData, setFormData] = useState({
+        name: "",
+        bio: "",
+        skills: "",
+        location: "",
+        phone: ""
+      });
+
+      const handleUpdate = async (e) => {
+  e.preventDefault();
+
+  const token = localStorage.getItem("token");
+
+  try {
+    const response = await API.put(
+      "/auth/profile",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    setUser(response.data.user);
+    setFormData({
+      name: response.data.user.name || "",
+      bio: response.data.user.bio || "",
+      skills: response.data.user.skills || "",
+      location: response.data.user.location || "",
+      phone: response.data.user.phone || ""
+    });
+
+    setEditing(false);
+
+  } catch (error) {
+    setMessage(
+      error.response?.data?.message || "Profile update failed"
+    );
+  }
+};
   useEffect(() => {
     const fetchProfile = async () => {
 
@@ -20,16 +62,25 @@ function Profile() {
 
       try {
 
-        const response = await axios.get(
-          "http://localhost:3000/api/auth/profile",
+        const response = await API.get(
+          "/auth/profile",
           {
             headers: {
               Authorization: `Bearer ${token}`
             }
           }
         );
-
+       
         setUser(response.data.user);
+
+
+      setFormData({
+        name: response.data.user.name || "",
+        bio: response.data.user.bio || "",
+        skills: response.data.user.skills || "",
+        location: response.data.user.location || "",
+        phone: response.data.user.phone || ""
+      });
 
       } catch (error) {
 
@@ -69,29 +120,115 @@ function Profile() {
           {user.email}
         </p>
 
-        <div className="profile-info">
+        <button
+          className="primary-btn"
+          onClick={() => setEditing(true)}
+        >
+        Edit Profile
+        </button>
+        <div></div>
+        {editing ? (
+          <form className="profile-form" onSubmit={handleUpdate} >
 
-          <div>
-            <span>Bio</span>
-            <p>{user.bio || "Tell people about yourself."}</p>
-          </div>
+          <label>Name</label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) =>
+            setFormData({
+            ...formData,
+              name: e.target.value
+            })
+            }
+          />
 
-          <div>
-            <span>Skills</span>
-            <p>{user.skills || "Add your skills."}</p>
-          </div>
+          <label>Bio</label>
+          <textarea
+          value={formData.bio}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              bio: e.target.value
+            })
+          }
+        />
 
-          <div>
-            <span>Location</span>
-            <p>{user.location || "Add your location."}</p>
-          </div>
+      <label>Skills</label>
+      <input
+        type="text"
+        value={formData.skills}
+        onChange={(e) =>
+          setFormData({
+            ...formData,
+            skills: e.target.value
+          })
+        }
+      />
 
-          <div>
-            <span>Phone</span>
-            <p>{user.phone || "Add your phone number."}</p>
-          </div>
+      <label>Location</label>
+      <input
+        type="text"
+        value={formData.location}
+        onChange={(e) =>
+        setFormData({
+          ...formData,
+          location: e.target.value
+        })
+        }
+      />
 
-        </div>
+      <label>Phone</label>
+      <input
+        type="text"
+        value={formData.phone}
+        onChange={(e) =>
+        setFormData({
+          ...formData,
+          phone: e.target.value
+        })
+        }
+      />
+
+      <button className="primary-btn">
+        Save Changes
+      </button>
+
+      <button
+        className="secondary-btn"
+        onClick={() => setEditing(false)}
+      >
+        Cancel
+    </button>
+
+  </form>
+
+) : (
+
+  <div className="profile-info">
+
+    <div>
+      <span>Bio</span>
+      <p>{user.bio || "Tell people about yourself."}</p>
+    </div>
+
+    <div>
+      <span>Skills</span>
+      <p>{user.skills || "Add your skills."}</p>
+    </div>
+
+    <div>
+      <span>Location</span>
+      <p>{user.location || "Add your location."}</p>
+    </div>
+
+    <div>
+      <span>Phone</span>
+      <p>{user.phone || "Add your phone number."}</p>
+    </div>
+
+  </div>
+
+)}
 
       </div>
 
