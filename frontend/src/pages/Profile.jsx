@@ -1,106 +1,98 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 
 function Profile() {
-  const navigate = useNavigate();
-
   const [user, setUser] = useState(null);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-   const [editing, setEditing] = useState(false);
-        const [formData, setFormData] = useState({
-        name: "",
-        bio: "",
-        skills: "",
-        location: "",
-        phone: ""
-      });
+  // skills lives as a comma-separated string while editing, array once saved
+  const [formData, setFormData] = useState({
+    name: "",
+    bio: "",
+    skills: "",
+    location: "",
+    phone: ""
+  });
 
-      const handleUpdate = async (e) => {
-  e.preventDefault();
-
-  const token = localStorage.getItem("token");
-
-  try {
-    const response = await API.put(
-      "/auth/profile",
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
-
-    setUser(response.data.user);
+  const populateForm = (userData) => {
     setFormData({
-      name: response.data.user.name || "",
-      bio: response.data.user.bio || "",
-      skills: response.data.user.skills || "",
-      location: response.data.user.location || "",
-      phone: response.data.user.phone || ""
+      name: userData.name || "",
+      bio: userData.bio || "",
+      skills: Array.isArray(userData.skills) ? userData.skills.join(", ") : "",
+      location: userData.location || "",
+      phone: userData.phone || ""
     });
+  };
 
-    setEditing(false);
-
-  } catch (error) {
-    setMessage(
-      error.response?.data?.message || "Profile update failed"
-    );
-  }
-};
   useEffect(() => {
     const fetchProfile = async () => {
-
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-
       try {
+        const response = await API.get("/auth/profile");
 
-        const response = await API.get(
-          "/auth/profile",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
-       
         setUser(response.data.user);
-
-
-      setFormData({
-        name: response.data.user.name || "",
-        bio: response.data.user.bio || "",
-        skills: response.data.user.skills || "",
-        location: response.data.user.location || "",
-        phone: response.data.user.phone || ""
-      });
+        populateForm(response.data.user);
 
       } catch (error) {
-
-        localStorage.removeItem("token");
-        setMessage("Session expired. Please login again.");
-
-        setTimeout(() => {
-          navigate("/login");
-        }, 1000);
+        setMessage(
+          error.response?.data?.message || "Couldn't load your profile"
+        );
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProfile();
+  }, []);
 
-  }, [navigate]);
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+
+    setSaving(true);
+    setMessage("");
+
+    // split "tailoring, bookkeeping,  weaving" into a clean array
+    const skillsArray = formData.skills
+      .split(",")
+      .map((skill) => skill.trim())
+      .filter(Boolean);
+
+    try {
+      const response = await API.put("/auth/profile", {
+        name: formData.name,
+        bio: formData.bio,
+        location: formData.location,
+        phone: formData.phone,
+        skills: skillsArray
+      });
+
+      setUser(response.data.user);
+      populateForm(response.data.user);
+      setEditing(false);
+
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || "Profile update failed"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="loading">
+        Loading profile...
+      </div>
+    );
+  }
 
   if (!user) {
     return (
       <div className="loading">
-        {message || "Loading profile..."}
+        {message || "Couldn't load profile."}
       </div>
     );
   }
@@ -126,109 +118,105 @@ function Profile() {
         >
         Edit Profile
         </button>
-        <div></div>
+
+        {message && <p className="error-message">{message}</p>}
+
         {editing ? (
-          <form className="profile-form" onSubmit={handleUpdate} >
+          <form className="profile-form" onSubmit={handleUpdate}>
 
           <label>Name</label>
           <input
             type="text"
             value={formData.name}
             onChange={(e) =>
-            setFormData({
-            ...formData,
-              name: e.target.value
-            })
+              setFormData({ ...formData, name: e.target.value })
             }
           />
 
           <label>Bio</label>
           <textarea
-          value={formData.bio}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              bio: e.target.value
-            })
-          }
-        />
+            value={formData.bio}
+            onChange={(e) =>
+              setFormData({ ...formData, bio: e.target.value })
+            }
+          />
 
-      <label>Skills</label>
-      <input
-        type="text"
-        value={formData.skills}
-        onChange={(e) =>
-          setFormData({
-            ...formData,
-            skills: e.target.value
-          })
-        }
-      />
+          <label>Skills (comma-separated)</label>
+          <input
+            type="text"
+            placeholder="e.g. tailoring, bookkeeping, weaving"
+            value={formData.skills}
+            onChange={(e) =>
+              setFormData({ ...formData, skills: e.target.value })
+            }
+          />
 
-      <label>Location</label>
-      <input
-        type="text"
-        value={formData.location}
-        onChange={(e) =>
-        setFormData({
-          ...formData,
-          location: e.target.value
-        })
-        }
-      />
+          <label>Location</label>
+          <input
+            type="text"
+            value={formData.location}
+            onChange={(e) =>
+              setFormData({ ...formData, location: e.target.value })
+            }
+          />
 
-      <label>Phone</label>
-      <input
-        type="text"
-        value={formData.phone}
-        onChange={(e) =>
-        setFormData({
-          ...formData,
-          phone: e.target.value
-        })
-        }
-      />
+          <label>Phone</label>
+          <input
+            type="text"
+            value={formData.phone}
+            onChange={(e) =>
+              setFormData({ ...formData, phone: e.target.value })
+            }
+          />
 
-      <button className="primary-btn">
-        Save Changes
-      </button>
+          <button className="primary-btn" disabled={saving}>
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
 
-      <button
-        className="secondary-btn"
-        onClick={() => setEditing(false)}
-      >
-        Cancel
-    </button>
+          <button
+            type="button"
+            className="secondary-btn"
+            onClick={() => {
+              populateForm(user);
+              setEditing(false);
+            }}
+          >
+            Cancel
+          </button>
 
-  </form>
+        </form>
 
-) : (
+        ) : (
 
-  <div className="profile-info">
+          <div className="profile-info">
 
-    <div>
-      <span>Bio</span>
-      <p>{user.bio || "Tell people about yourself."}</p>
-    </div>
+            <div>
+              <span>Bio</span>
+              <p>{user.bio || "Tell people about yourself."}</p>
+            </div>
 
-    <div>
-      <span>Skills</span>
-      <p>{user.skills || "Add your skills."}</p>
-    </div>
+            <div>
+              <span>Skills</span>
+              <p>
+                {Array.isArray(user.skills) && user.skills.length > 0
+                  ? user.skills.join(", ")
+                  : "Add your skills."}
+              </p>
+            </div>
 
-    <div>
-      <span>Location</span>
-      <p>{user.location || "Add your location."}</p>
-    </div>
+            <div>
+              <span>Location</span>
+              <p>{user.location || "Add your location."}</p>
+            </div>
 
-    <div>
-      <span>Phone</span>
-      <p>{user.phone || "Add your phone number."}</p>
-    </div>
+            <div>
+              <span>Phone</span>
+              <p>{user.phone || "Add your phone number."}</p>
+            </div>
 
-  </div>
+          </div>
 
-)}
+        )}
 
       </div>
 

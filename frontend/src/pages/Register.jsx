@@ -81,7 +81,7 @@ function Register() {
             required
           />
 
-          <button type="submit">
+          <button type="submit" className="primary-btn full-compact">
             Create account
           </button>
 

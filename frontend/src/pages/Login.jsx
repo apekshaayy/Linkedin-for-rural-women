@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../api/api";
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -11,6 +13,7 @@ function Login() {
   });
 
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -23,23 +26,20 @@ function Login() {
     e.preventDefault();
 
     setMessage("");
+    setSubmitting(true);
 
     try {
-      const response = await API.post(
-        "/auth/login",
-        formData
-      );
+      const response = await API.post("/auth/login", formData);
 
-      // Save JWT token
-      localStorage.setItem("token", response.data.token);
-
-      // Go to profile
+      login(response.data.token);
       navigate("/profile");
 
     } catch (error) {
       setMessage(
         error.response?.data?.message || "Login failed"
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -78,8 +78,8 @@ function Login() {
             required
           />
 
-          <button type="submit" className="primary-btn full">
-            Sign in
+          <button type="submit" className="primary-btn full" disabled={submitting}>
+            {submitting ? "Signing in..." : "Sign in"}
           </button>
 
         </form>

@@ -211,6 +211,11 @@ a {
   margin-top: 25px;
 }
 
+.full-compact {
+  width: 100%;
+  margin-top: 20px;
+}
+
 .message {
   margin-top: 15px;
   color: #6b4f3f;

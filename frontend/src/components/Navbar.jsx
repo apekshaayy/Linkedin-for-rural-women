@@ -1,27 +1,29 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const { isAuthenticated, logout } = useAuth();
 
-  const logout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = () => {
+    logout();
     navigate("/login");
   };
 
   return (
     <nav className="navbar">
       <Link to="/" className="logo">
+        <span className="logo-shell">◒</span>
         RuralConnect
       </Link>
 
       <div className="nav-links">
         <Link to="/">Home</Link>
 
-        {token ? (
+        {isAuthenticated ? (
           <>
             <Link to="/profile">Profile</Link>
-            <button onClick={logout}>Logout</button>
+            <button onClick={handleLogout}>Logout</button>
           </>
         ) : (
           <>

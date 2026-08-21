@@ -1,6 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Navbar from "./components/Navbar";
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
@@ -8,33 +12,28 @@ import Home from "./pages/Home";
 
 function App() {
   return (
-    <BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Navbar />
 
-      <nav className="navbar">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/profile"
+            element={
+              // occasional comment out becuase i dont have mongo setup
+              //<ProtectedRoute>
+                <Profile />
+              //</ProtectedRoute>
+            }
+          />
 
-        <div className="logo">
-          <span className="logo-shell">◒</span>
-          RuralConnect
-        </div>
-
-        <div className="nav-links">
-          <a href="/">Home</a>
-          <a href="/register">Join Us</a>
-          <a href="/login">Login</a>
-        </div>
-
-      </nav>
-
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={<Profile />} />
-
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-
-    </BrowserRouter>
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
